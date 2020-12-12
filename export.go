@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/foreversmart/notion_blog/blog"
+	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/meta"
 	"io/ioutil"
 	"os"
@@ -35,11 +35,12 @@ func main() {
 	}
 
 	for index, pageId := range config.PageIds {
-		fmt.Println(pageId, index, len(config.PageIds))
+		log.Logger.Info(pageId, index, len(config.PageIds))
 		pageId = getPageId(pageId)
 		pageMeta, err := meta.PageMetaInfo(pageId)
+		log.Logger.Info(pageMeta)
 		if err != nil {
-			fmt.Println("page", pageId, err)
+			log.Logger.Error("page", pageId, err)
 			continue
 		}
 
@@ -55,7 +56,7 @@ func main() {
 		// generate hugo blog to output target
 		content, err := blog.NewBlog().HugoBlog(pageId, pageMeta)
 		if err != nil {
-			fmt.Println("HugoBlog", err)
+			log.Logger.Error("HugoBlog", err)
 		} else {
 			ioutil.WriteFile(filepath.Join(config.OutPutPath, pageId+".html"), []byte(content), os.ModePerm)
 		}

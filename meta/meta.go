@@ -1,7 +1,7 @@
 package meta
 
 import (
-	"fmt"
+	"github.com/foreversmart/notion_blog/log"
 	"math"
 	"strings"
 	"time"
@@ -22,6 +22,7 @@ type PageMeta struct {
 
 func PageMetaInfo(pageId string) (meta *PageMeta, err error) {
 	meta = &PageMeta{}
+	meta.Meta = make(map[string]string)
 	pageChunkResp, err := LoadPageChunk(pageId)
 	if err != nil {
 		return nil, err
@@ -33,7 +34,7 @@ func PageMetaInfo(pageId string) (meta *PageMeta, err error) {
 	pageMapBlock := make(map[string]*PageChunkBlock)
 	for _, block := range pageChunkResp.RecordMap.Block {
 		if block.Value.Type == "page" {
-			fmt.Println("block:", block.Value.ID, block.Value.ParentID, block.Value.CreatedTime, block.Value.Properties.Title[0][0])
+			log.Logger.Debug("block:", block.Value.ID, block.Value.ParentID, block.Value.CreatedTime, block.Value.Properties.Title[0][0])
 			pageMapBlock[block.Value.ID] = block
 		}
 		if createTime > block.Value.CreatedTime {

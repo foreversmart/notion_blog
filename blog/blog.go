@@ -3,6 +3,7 @@ package blog
 import (
 	"bytes"
 	"fmt"
+	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/meta"
 	"github.com/go-rod/rod"
 	bdfanyi "github.com/hnmaonanbei/go-baidu-fanyi"
@@ -75,7 +76,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	subTitle := HugoPageUrl(title, pageId)
 	desc, err := PageDesc(page)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error(err)
 		return "", err
 	}
 
@@ -125,7 +126,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	writer := &bytes.Buffer{}
 	err = tpl.Execute(writer, hugoMeta)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error(err)
 		return title, err
 	}
 
@@ -245,14 +246,14 @@ func PageDesc(page *rod.Page) (content string, err error) {
 func HugoPageUrl(title string, pageId string) string {
 	tk, err := bdfanyi.Gtk()
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error(err)
 		return pageId
 	}
 
 	options := bdfanyi.NewOptions(bdfanyi.ZH, bdfanyi.EN, tk, "")
 	r, err := bdfanyi.Do(title, options)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error(err)
 		return pageId
 	}
 

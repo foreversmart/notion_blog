@@ -3,7 +3,7 @@ package meta
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"github.com/foreversmart/notion_blog/log"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -25,7 +25,7 @@ func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) 
 	}
 
 	reqStr, _ := json.Marshal(req)
-	fmt.Println(string(reqStr))
+	log.Logger.Info(string(reqStr))
 
 	request, _ := http.NewRequest(http.MethodPost, "https://www.notion.so/api/v3/loadPageChunk", bytes.NewReader(reqStr))
 	request.Header.Set("content-type", "application/json")
@@ -45,7 +45,7 @@ func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) 
 
 	err = json.Unmarshal(body, &pageChunkResp)
 	if err != nil {
-		fmt.Println(string(body), err)
+		log.Logger.Error(string(body), err)
 		return nil, err
 	}
 

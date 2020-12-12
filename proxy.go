@@ -28,8 +28,6 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.Host)
-
 	proxy := NewSingleHostReverseProxy(url)
 	proxy.ServeHTTP(w, r)
 
