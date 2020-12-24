@@ -18,9 +18,18 @@ func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) 
 	}
 
 	req := &PageChunkRequest{
-		PageID:          ToUuid(pageId),
-		Limit:           50,
-		ChunkNumber:     1,
+		PageID:      ToUuid(pageId),
+		Limit:       50,
+		ChunkNumber: 0,
+		Cursor: &PageCursor{
+			Stack: [][]*PageStackItem{{
+				{
+					Table: "block",
+					ID:    ToUuid(pageId),
+					Index: 0,
+				},
+			}},
+		},
 		VerticalColumns: false,
 	}
 
@@ -42,6 +51,8 @@ func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) 
 	if err != nil {
 		return nil, err
 	}
+
+	//log.Logger.Infof("meta response: %s", string(body))
 
 	err = json.Unmarshal(body, &pageChunkResp)
 	if err != nil {

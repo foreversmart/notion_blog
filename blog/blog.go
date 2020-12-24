@@ -7,6 +7,7 @@ import (
 	"github.com/foreversmart/notion_blog/meta"
 	"github.com/go-rod/rod"
 	bdfanyi "github.com/hnmaonanbei/go-baidu-fanyi"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -59,7 +60,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	if err != nil {
 		return "", err
 	}
-	pageContent, err := PageContent(page)
+	pageContent, err := PageContent(pageId, page)
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +87,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	}
 
 	hugoMeta := &HugoBlogMeta{
-		Title:       title,
+		Title:       pageMeta.Title,
 		SubTitle:    subTitle,
 		Excerpt:     subTitle,
 		Description: desc,
@@ -97,6 +98,8 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 		UrlPath:     category[0],
 		Url:         subTitle,
 	}
+
+	log.Logger.Errorf("hugo blog meta %#v", hugoMeta)
 
 	// rewrite some meta from pageMeta
 	if v, ok := pageMeta.Meta["title"]; ok {
@@ -212,7 +215,7 @@ func PageComment(page *rod.Page) () {
 
 }
 
-func PageContent(page *rod.Page) (content string, err error) {
+func PageContent(pageId string, page *rod.Page) (content string, err error) {
 	ele, err := page.Element(".notion-page-content")
 	if err != nil {
 		return "", nil
@@ -224,11 +227,23 @@ func PageContent(page *rod.Page) (content string, err error) {
 	content = strings.Replace(content, "padding-left: calc(96px + env(safe-area-inset-left));", "padding-left: 5%;", 1)
 	content = strings.Replace(content, "padding-right: calc(96px + env(safe-area-inset-right));", "padding-right: 5%; margin: auto;", 1)
 	content = strings.Replace(content, "padding-bottom: 30vh;", "padding-bottom: 10vh;", 1)
-
 	// content filter
 	content = strings.Replace(content, `contenteditable="true"`, "", -1)
 	// convert local image to notion cdn image
 	content = strings.Replace(content, `img src="/image`, `img src="https://www.notion.so/image`, -1)
+
+	// replace html anchor
+	content = strings.Replace(content, `data-block-id`, "id", -1)
+
+	// match href="/20ecc4449a3843e6bea9324c3328241e#026465ad4766428784aa1163c89432f1" and replace to href="#026465ad-47664-28784aa11-63c89432f1"
+	regStr := "href=\"/" + pageId + `#[\w]+"`
+	reg := regexp.MustCompile(regStr)
+	content = reg.ReplaceAllStringFunc(content, func(s string) string {
+		if items := strings.Split(s, "#"); len(items) == 2 {
+			return `href="` + "#" + meta.ToUuid(items[1]) + `"`
+		}
+		return s
+	})
 
 	return
 }
