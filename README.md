@@ -1,13 +1,19 @@
 # notion_blog
+
 this is a tool which transfer notion page to hugo html page
 
 ### Install
+
 go get github.com/foreversmart/notion_blog
 
 ### Usage
+
 ./export it will generate hugo html page to target path usually hugo_blog/posts/
 
 ### Config
+
+Use config.json which at same dir as default config file, you can use config.local.json to cover default config file.
+
 ``` json
 {
   "page_ids": [
@@ -22,15 +28,17 @@ go get github.com/foreversmart/notion_blog
   "out_put_path": "/Users/someone/hugo_blog/content/post"
 }
 ``` 
+
 * page_ids is an array of notion public page id which you want generate these to hugo html page
 * out_put_path define the target path export tool will generate it into
 
 ### Notion Page Meta
-you can redefine some notion page meta by yourself instead use tool generated.
-notion blog tool craw notion page comment as notion page meta which start with **meta:**
+
+you can redefine some notion page meta by yourself instead use tool generated. notion blog tool craw notion page comment as notion page meta which start with **meta:**
 , the same as tags by **tags:**, and categories as **cate:**
 
 * Meta Properties List
+
 ```
 tags:$tags
 cate:$categories

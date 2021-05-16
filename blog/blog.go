@@ -2,12 +2,14 @@ package blog
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/meta"
 	"github.com/go-rod/rod"
 	bdfanyi "github.com/hnmaonanbei/go-baidu-fanyi"
 	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -51,10 +53,11 @@ func (b *Blog) Close() error {
 
 func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string, err error) {
 	url := Host + pageId
+
 	page := b.Browser.MustPage(url)
 
 	// sleep enough time to wait page render
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 7)
 
 	title, _, err := PageTile(page)
 	if err != nil {
@@ -65,13 +68,11 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 		return "", err
 	}
 
-	tags := make([]string, 0, 5)
 	category := make([]string, 0, 5)
 	if len(pageMeta.Titles) > 0 {
-		tags = append(tags, pageMeta.Titles[1])
+		pageMeta.Tags = append(pageMeta.Tags, pageMeta.Titles[1])
 		category = append(category, pageMeta.Titles[1])
 	}
-	tags = append(tags, PageTags(pageMeta)...)
 	category = append(category, PageCategory(pageMeta)...)
 
 	subTitle := HugoPageUrl(title, pageId)
@@ -83,7 +84,8 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 
 	r := []rune(desc)
 	if len(r) > 150 {
-		desc = string(r[0:150])
+		desc = strconv.Quote(string(r[0:150]))
+		desc = strings.Trim(desc, `""`)
 	}
 
 	hugoMeta := &HugoBlogMeta{
@@ -93,14 +95,14 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 		Description: desc,
 		Date:        pageMeta.CreatedAt,
 		Image:       pageMeta.PageCover,
-		Tags:        tags,
+		Tags:        pageMeta.Tags,
 		Category:    category,
 		UrlPath:     category[0],
 		Url:         subTitle,
 	}
 
-	log.Logger.Errorf("hugo blog meta %#v", hugoMeta)
-
+	ts, _ := json.Marshal(hugoMeta)
+	log.Logger.Infof("page hugo meta %s", string(ts))
 	// rewrite some meta from pageMeta
 	if v, ok := pageMeta.Meta["title"]; ok {
 		hugoMeta.Title = v
@@ -110,6 +112,8 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	}
 	if v, ok := pageMeta.Meta["sub_title"]; ok {
 		hugoMeta.SubTitle = v
+		// reset to new url
+		hugoMeta.Url = v
 	}
 	if v, ok := pageMeta.Meta["desc"]; ok {
 		hugoMeta.Description = v
@@ -142,23 +146,23 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 
 }
 
-func PageTags(m *meta.PageMeta) (tags []string) {
-	for _, comment := range m.Comment {
-		if strings.HasPrefix(comment, "tag:") {
-			comment = strings.TrimPrefix(comment, "tag:")
-			items := strings.Split(comment, "/")
-			tags = append(tags, items...)
-		}
-		if strings.HasPrefix(comment, "tags:") {
-			comment = strings.TrimPrefix(comment, "tags:")
-			items := strings.Split(comment, "/")
-			tags = append(tags, items...)
-		}
-	}
-
-	return
-}
-
+//func PageTags(m *meta.PageMeta) (tags []string) {
+//	for _, comment := range m.Comment {
+//		if strings.HasPrefix(comment, "tag:") {
+//			comment = strings.TrimPrefix(comment, "tag:")
+//			items := strings.Split(comment, "/")
+//			tags = append(tags, items...)
+//		}
+//		if strings.HasPrefix(comment, "tags:") {
+//			comment = strings.TrimPrefix(comment, "tags:")
+//			items := strings.Split(comment, "/")
+//			tags = append(tags, items...)
+//		}
+//	}
+//
+//	return
+//}
+//
 func PageCategory(m *meta.PageMeta) (categories []string) {
 	for _, comment := range m.Comment {
 		if strings.HasPrefix(comment, "cate:") {

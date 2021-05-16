@@ -29,10 +29,17 @@ func main() {
 		panic(err)
 	}
 
-	configFile := filepath.Join(pwd, "config.json")
+	configFile := filepath.Join(pwd, "config.local.json")
 	configContent, err := ioutil.ReadFile(configFile)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		panic(err)
+	} else if os.IsNotExist(err) {
+		// config.local.json not exist fail back to config.json
+		configFile = filepath.Join(pwd, "config.json")
+		configContent, err = ioutil.ReadFile(configFile)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	var config *BlogConfig
@@ -42,7 +49,7 @@ func main() {
 	}
 
 	for index, pageId := range config.PageIds {
-		log.Logger.Info(pageId, "index:", index, len(config.PageIds))
+		log.Logger.Infof("dealing index: %d, page: %s", index, pageId)
 
 		pageId = getPageId(pageId)
 		if v, ok := config.PageConfig[pageId]; ok {
@@ -52,10 +59,17 @@ func main() {
 		}
 
 		pageMeta, err := meta.PageMetaInfo(pageId)
-		log.Logger.Info(pageMeta)
+		//log.Logger.Info(pageMeta)
 		if err != nil {
 			log.Logger.Error("page", pageId, err)
 			continue
+		}
+
+		//if no page no modify so not update
+		if v, ok := config.PageConfig[pageId]; ok {
+			if v.PageMeta != nil && v.LastModifyTimestamp >= pageMeta.LastModifyTimestamp {
+				continue
+			}
 		}
 
 		config.PageConfig[pageId] = &PageConfig{
@@ -63,15 +77,13 @@ func main() {
 			IsRender: true,
 		}
 
-		//fmt.Println(pageMeta)
-
 		if update, ok := config.PageUpdate[pageId]; ok {
 			if pageMeta.LastModifyTimestamp < update {
 				// 已经有更新记录且页面最近没有修改过的不更新
 				continue
 			}
 		}
-
+		log.Logger.Infof("blog generate %v", pageId)
 		// generate hugo blog to output target
 		content, err := blog.NewBlog().HugoBlog(pageId, pageMeta)
 		if err != nil {
@@ -82,6 +94,7 @@ func main() {
 
 	}
 
+	// update config file
 	configNew, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		log.Logger.Errorf("%v", err)

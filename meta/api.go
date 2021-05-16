@@ -34,7 +34,7 @@ func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) 
 	}
 
 	reqStr, _ := json.Marshal(req)
-	log.Logger.Info(string(reqStr))
+	//log.Logger.Info(string(reqStr))
 
 	request, _ := http.NewRequest(http.MethodPost, "https://www.notion.so/api/v3/loadPageChunk", bytes.NewReader(reqStr))
 	request.Header.Set("content-type", "application/json")

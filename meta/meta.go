@@ -16,6 +16,7 @@ type PageMeta struct {
 	Title               string            `json:"title"`
 	Comment             []string          `json:"comment"`
 	Meta                map[string]string `json:"meta"`
+	Tags                []string          `json:"tags"`
 
 	PageCover string `json:"page_cover"`
 }
@@ -50,15 +51,34 @@ func PageMetaInfo(pageId string) (meta *PageMeta, err error) {
 	for _, comment := range pageChunkResp.RecordMap.Comment {
 		if len(comment.Value.Text) > 0 && len(comment.Value.Text[0]) > 0 {
 			meta.Comment = append(meta.Comment, comment.Value.Text[0][0])
-
-			// add meta properties
-			if strings.HasPrefix(comment.Value.Text[0][0], "meta:") {
-				s := strings.TrimPrefix(comment.Value.Text[0][0], "meta:")
-				items := strings.Split(s, ":")
-				if len(items) > 1 {
-					meta.Meta[items[0]] = items[1]
+			// 新版本 notion 融合多个 comment 到一个 comment 为一行
+			lines := strings.Split(comment.Value.Text[0][0], "\n")
+			for _, line := range lines {
+				// add meta properties
+				if strings.HasPrefix(line, "meta:") {
+					s := strings.TrimPrefix(line, "meta:")
+					items := strings.Split(s, ":")
+					if len(items) > 1 {
+						meta.Meta[items[0]] = items[1]
+					}
 				}
+
+				// add tags properties
+				if strings.HasPrefix(line, "tags:") {
+					if strings.HasPrefix(line, "tag:") {
+						s := strings.TrimPrefix(line, "tag:")
+						items := strings.Split(s, "/")
+						meta.Tags = append(meta.Tags, items...)
+					}
+					if strings.HasPrefix(line, "tags:") {
+						s := strings.TrimPrefix(line, "tags:")
+						items := strings.Split(s, "/")
+						meta.Tags = append(meta.Tags, items...)
+					}
+				}
+
 			}
+
 		}
 
 	}

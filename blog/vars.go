@@ -2,8 +2,7 @@ package blog
 
 const Host = "https://www.notion.so/"
 
-const HugoBlogHeaderTpl = `
----
+const HugoBlogHeaderTpl = `---
 showonlyimage: true
 title:      "{{.Title}}"
 subtitle:   "{{.SubTitle}}"
@@ -15,6 +14,5 @@ image: "{{.Image}}"
 published: true 
 tags: [{{range .Tags}}{{.}}, {{end}}]
 categories: [{{range .Category}}{{.}}, {{end}}]
-URL: "/{{.Category}}/{{.Url}}/"
----
-`
+URL: "/{{.UrlPath}}/{{.Url}}/"
+---`
