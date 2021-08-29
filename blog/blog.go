@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/foreversmart/notion_blog/lib/bdfanyi"
 	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/meta"
 	"github.com/go-rod/rod"
-	bdfanyi "github.com/hnmaonanbei/go-baidu-fanyi"
 	"regexp"
 	"strconv"
 	"strings"
@@ -263,7 +263,7 @@ func PageDesc(page *rod.Page) (content string, err error) {
 }
 
 func HugoPageUrl(title string, pageId string) string {
-	tk, err := bdfanyi.Gtk()
+	var tk, err = bdfanyi.Gtk()
 	if err != nil {
 		log.Logger.Error(err)
 		return pageId
