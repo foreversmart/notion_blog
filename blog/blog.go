@@ -70,7 +70,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 
 	category := make([]string, 0, 5)
 	if len(pageMeta.Titles) > 0 {
-		pageMeta.Tags = append(pageMeta.Tags, pageMeta.Titles[1])
+		//pageMeta.Tags = append(pageMeta.Tags, pageMeta.Titles[1])
 		category = append(category, pageMeta.Titles[1])
 	}
 	category = append(category, PageCategory(pageMeta)...)
