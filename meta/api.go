@@ -4,18 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/foreversmart/notion_blog/log"
+	"github.com/foreversmart/notion_blog/utils"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) {
-	// find page id has "-" eg. cloud-native-f76464d369804e42bb67b180e7155a11
-	// need remove the prefix
-	if strings.Index(pageId, "-") >= 0 {
-		items := strings.Split(pageId, "-")
-		pageId = items[len(items)-1]
-	}
+	pageId = utils.PurePageId(pageId)
 
 	req := &PageChunkRequest{
 		PageID:      ToUuid(pageId),
