@@ -51,6 +51,81 @@ func (b *Blog) Close() error {
 	return b.Browser.Close()
 }
 
+func (b *Blog) PageIndex(pageId string) (subPages []string, err error) {
+	url := Host + pageId
+
+	page := b.Browser.MustPage(url)
+	// sleep enough time to wait page render
+	time.Sleep(time.Second * 7)
+
+	eles, err := page.Elements(".notion-page-block")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ele := range eles {
+		aEle, err := ele.Element("a")
+		if err != nil {
+			continue
+		}
+
+		aHref, err := aEle.Attribute("href")
+		if err != nil {
+			continue
+		}
+
+		subPages = append(subPages, *aHref)
+	}
+
+	page.Close()
+
+	return
+}
+
+func (b *Blog) WalkPages(entrances []string) (allPages []string, err error) {
+	// record page has already visited
+	pageMap := make(map[string]bool)
+	// page chan queue
+	pageChan := make(chan string, 10000)
+
+	// in queue
+	for _, e := range entrances {
+		pageChan <- e
+		pageMap[e] = true
+	}
+
+	for len(pageChan) > 0 {
+		pageId := <-pageChan
+		pageMeta, err := meta.PageMetaInfo(pageId)
+		if err != nil {
+			return nil, err
+		}
+
+		// if is index page
+		if pageMeta.Meta["index"] == "index" {
+			subPages, err := b.PageIndex(pageId)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, s := range subPages {
+				if !pageMap[s] {
+					pageChan <- s
+					pageMap[s] = true
+				}
+			}
+
+		}
+
+		// find the publish page
+		if len(pageMeta.Meta["sub_title"]) > 0 {
+			allPages = append(allPages, pageId)
+		}
+	}
+
+	return
+}
+
 func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string, err error) {
 	url := Host + pageId
 
@@ -146,23 +221,6 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 
 }
 
-//func PageTags(m *meta.PageMeta) (tags []string) {
-//	for _, comment := range m.Comment {
-//		if strings.HasPrefix(comment, "tag:") {
-//			comment = strings.TrimPrefix(comment, "tag:")
-//			items := strings.Split(comment, "/")
-//			tags = append(tags, items...)
-//		}
-//		if strings.HasPrefix(comment, "tags:") {
-//			comment = strings.TrimPrefix(comment, "tags:")
-//			items := strings.Split(comment, "/")
-//			tags = append(tags, items...)
-//		}
-//	}
-//
-//	return
-//}
-//
 func PageCategory(m *meta.PageMeta) (categories []string) {
 	for _, comment := range m.Comment {
 		if strings.HasPrefix(comment, "cate:") {
@@ -213,10 +271,6 @@ func PageTile(page *rod.Page) (title, titleHtml string, err error) {
 	}
 
 	return
-}
-
-func PageComment(page *rod.Page) () {
-
 }
 
 func PageContent(pageId string, page *rod.Page) (content string, err error) {
