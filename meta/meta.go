@@ -14,6 +14,8 @@ type PageMeta struct {
 	LastModifyTimestamp int64             `json:"last_modify_timestamp"`
 	Titles              []string          `json:"titles"` // 0 is child and current and then is parent
 	Title               string            `json:"title"`
+	SubTitle            string            `json:"sub_title"` // must be alphabet and number
+	PagePath            string            `json:"page_path"` //
 	Comment             []string          `json:"comment"`
 	Meta                map[string]string `json:"meta"`
 	Tags                []string          `json:"tags"`

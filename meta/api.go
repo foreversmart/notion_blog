@@ -13,14 +13,14 @@ func LoadPageChunk(pageId string) (pageChunkResp *PageChunkResponse, err error) 
 	pageId = utils.PurePageId(pageId)
 
 	req := &PageChunkRequest{
-		PageID:      ToUuid(pageId),
+		PageID:      utils.PageUuid(pageId),
 		Limit:       50,
 		ChunkNumber: 0,
 		Cursor: &PageCursor{
 			Stack: [][]*PageStackItem{{
 				{
 					Table: "block",
-					ID:    ToUuid(pageId),
+					ID:    utils.PageUuid(pageId),
 					Index: 0,
 				},
 			}},
