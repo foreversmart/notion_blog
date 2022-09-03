@@ -7,6 +7,7 @@ import (
 	"github.com/foreversmart/notion_blog/lib/bdfanyi"
 	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/meta"
+	"github.com/foreversmart/notion_blog/utils"
 	"github.com/go-rod/rod"
 	"regexp"
 	"strconv"
@@ -96,13 +97,17 @@ func (b *Blog) WalkPages(entrances []string) (allPages []string, err error) {
 
 	for len(pageChan) > 0 {
 		pageId := <-pageChan
+		fmt.Println("processing", pageId)
 		pageMeta, err := meta.PageMetaInfo(pageId)
 		if err != nil {
 			return nil, err
 		}
 
+		fmt.Println(pageMeta)
+
 		// if is index page
 		if pageMeta.Meta["index"] == "index" {
+			fmt.Println("processing index", pageId)
 			subPages, err := b.PageIndex(pageId)
 			if err != nil {
 				return nil, err
@@ -150,7 +155,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	}
 	category = append(category, PageCategory(pageMeta)...)
 
-	subTitle := HugoPageUrl(title, pageId)
+	subTitle := pageMeta.SubTitle
 	desc, err := PageDesc(page)
 	if err != nil {
 		log.Logger.Error(err)
@@ -298,7 +303,7 @@ func PageContent(pageId string, page *rod.Page) (content string, err error) {
 	reg := regexp.MustCompile(regStr)
 	content = reg.ReplaceAllStringFunc(content, func(s string) string {
 		if items := strings.Split(s, "#"); len(items) == 2 {
-			return `href="` + "#" + meta.ToUuid(items[1]) + `"`
+			return `href="` + "#" + utils.PageUuid(items[1]) + `"`
 		}
 		return s
 	})

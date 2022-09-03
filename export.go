@@ -5,10 +5,10 @@ import (
 	"github.com/foreversmart/notion_blog/blog"
 	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/meta"
+	"github.com/foreversmart/notion_blog/utils"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type BlogConfig struct {
@@ -51,7 +51,7 @@ func main() {
 	for index, pageId := range config.PageIds {
 		log.Logger.Infof("dealing index: %d, page: %s", index, pageId)
 
-		pageId = getPageId(pageId)
+		pageId = utils.GetPageIdFromUrl(pageId)
 		if v, ok := config.PageConfig[pageId]; ok {
 			if v.IsRender == false {
 				continue
@@ -106,13 +106,4 @@ func main() {
 		log.Logger.Error(err)
 	}
 
-}
-
-func getPageId(pageId string) string {
-	items := strings.Split(pageId, "notion.so/")
-	if len(items) > 1 {
-		return items[len(items)-1]
-	}
-
-	return pageId
 }
