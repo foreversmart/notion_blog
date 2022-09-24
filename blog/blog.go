@@ -9,10 +9,10 @@ import (
 	"github.com/foreversmart/notion_blog/meta"
 	"github.com/foreversmart/notion_blog/utils"
 	"github.com/go-rod/rod"
+	"html/template"
 	"regexp"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 )
 
@@ -83,53 +83,53 @@ func (b *Blog) PageIndex(pageId string) (subPages []string, err error) {
 	return
 }
 
-func (b *Blog) WalkPages(entrances []string) (allPages []string, err error) {
-	// record page has already visited
-	pageMap := make(map[string]bool)
-	// page chan queue
-	pageChan := make(chan string, 10000)
-
-	// in queue
-	for _, e := range entrances {
-		pageChan <- e
-		pageMap[e] = true
-	}
-
-	for len(pageChan) > 0 {
-		pageId := <-pageChan
-		fmt.Println("processing", pageId)
-		pageMeta, err := meta.PageMetaInfo(pageId)
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Println(pageMeta)
-
-		// if is index page
-		if pageMeta.Meta["index"] == "index" {
-			fmt.Println("processing index", pageId)
-			subPages, err := b.PageIndex(pageId)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, s := range subPages {
-				if !pageMap[s] {
-					pageChan <- s
-					pageMap[s] = true
-				}
-			}
-
-		}
-
-		// find the publish page
-		if len(pageMeta.Meta["sub_title"]) > 0 {
-			allPages = append(allPages, pageId)
-		}
-	}
-
-	return
-}
+//func (b *Blog) WalkPages(entrances []string) (allPages []string, err error) {
+//	// record page has already visited
+//	pageMap := make(map[string]bool)
+//	// page chan queue
+//	pageChan := make(chan string, 10000)
+//
+//	// in queue
+//	for _, e := range entrances {
+//		pageChan <- e
+//		pageMap[e] = true
+//	}
+//
+//	for len(pageChan) > 0 {
+//		pageId := <-pageChan
+//		fmt.Println("processing", pageId)
+//		pageMeta, err := meta.PageMetaInfo(pageId)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		fmt.Println(pageMeta)
+//
+//		// if is index page
+//		if pageMeta.Meta["index"] == "index" {
+//			fmt.Println("processing index", pageId)
+//			subPages, err := b.PageIndex(pageId)
+//			if err != nil {
+//				return nil, err
+//			}
+//
+//			for _, s := range subPages {
+//				if !pageMap[s] {
+//					pageChan <- s
+//					pageMap[s] = true
+//				}
+//			}
+//
+//		}
+//
+//		// find the publish page
+//		if len(pageMeta.Meta["sub_title"]) > 0 {
+//			allPages = append(allPages, pageId)
+//		}
+//	}
+//
+//	return
+//}
 
 func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string, err error) {
 	url := Host + pageId
@@ -148,11 +148,7 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 		return "", err
 	}
 
-	category := make([]string, 0, 5)
-	if len(pageMeta.Titles) > 0 {
-		//pageMeta.Tags = append(pageMeta.Tags, pageMeta.Titles[1])
-		category = append(category, pageMeta.Titles[1])
-	}
+	category := pageMeta.PageFolders
 	category = append(category, PageCategory(pageMeta)...)
 
 	subTitle := pageMeta.SubTitle
@@ -166,6 +162,9 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	if len(r) > 150 {
 		desc = strconv.Quote(string(r[0:150]))
 		desc = strings.Trim(desc, `""`)
+		desc = strings.Replace(desc, ":", "", -1)
+		desc = strings.Replace(desc, "\\n", " ", -1)
+		desc = strings.Replace(desc, "\\t", " ", -1)
 	}
 
 	hugoMeta := &HugoBlogMeta{
@@ -177,8 +176,8 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 		Image:       pageMeta.PageCover,
 		Tags:        pageMeta.Tags,
 		Category:    category,
-		UrlPath:     category[0],
-		Url:         subTitle,
+		UrlPath:     utils.PathPath(category[len(category)-1]),
+		Url:         pageMeta.PageName,
 	}
 
 	ts, _ := json.Marshal(hugoMeta)
@@ -189,11 +188,6 @@ func (b *Blog) HugoBlog(pageId string, pageMeta *meta.PageMeta) (content string,
 	}
 	if v, ok := pageMeta.Meta["created_at"]; ok {
 		hugoMeta.Date = v
-	}
-	if v, ok := pageMeta.Meta["sub_title"]; ok {
-		hugoMeta.SubTitle = v
-		// reset to new url
-		hugoMeta.Url = v
 	}
 	if v, ok := pageMeta.Meta["desc"]; ok {
 		hugoMeta.Description = v
@@ -297,6 +291,9 @@ func PageContent(pageId string, page *rod.Page) (content string, err error) {
 
 	// replace html anchor
 	content = strings.Replace(content, `data-block-id`, "id", -1)
+
+	// remove crossorigin
+	content = strings.Replace(content, `crossorigin="anonymous"`, "", -1)
 
 	// match href="/20ecc4449a3843e6bea9324c3328241e#026465ad4766428784aa1163c89432f1" and replace to href="#026465ad-47664-28784aa11-63c89432f1"
 	regStr := "href=\"/" + pageId + `#[\w]+"`

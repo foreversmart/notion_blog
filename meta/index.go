@@ -12,6 +12,8 @@ func WalkIndex(entrances []string) (pages map[string]*PageMeta, err error) {
 	pageMap := make(map[string]bool)
 	// page chan queue
 	pageChan := make(chan string, 10000)
+	// page folders map
+	pageFolderMap := make(map[string][]string)
 
 	// in queue
 	for _, e := range entrances {
@@ -28,14 +30,19 @@ func WalkIndex(entrances []string) (pages map[string]*PageMeta, err error) {
 			return nil, err
 		}
 
+		pageFolders := pageFolderMap[pageId]
 		pageMeta := pageChunk.CurrentPageMeta(pageId)
 		fmt.Println(".......", pageMeta)
+
+		// deal if page is index page
 		if pageMeta.Meta["index"] == "index" {
 			subPages := pageChunk.SubPages(pageId)
+			pageFolders = append(pageFolders, pageMeta.Title)
 
 			for sId, s := range subPages {
 				sId = utils.UuidToPageId(sId)
 				if len(s.Meta["sub_title"]) > 0 {
+					s.PageFolders = pageFolders
 					pages[sId] = s
 					continue
 				}
@@ -43,9 +50,18 @@ func WalkIndex(entrances []string) (pages map[string]*PageMeta, err error) {
 				if s.Meta["index"] == "index" && !pageMap[sId] {
 					pageChan <- sId
 					pageMap[sId] = true
+					pageFolderMap[sId] = pageFolders
 				}
 			}
 
+			continue
+		}
+
+		// normal page
+		if len(pageMeta.Meta["sub_title"]) > 0 {
+			pageMeta.PageFolders = pageFolders
+			pages[pageId] = pageMeta
+			continue
 		}
 
 	}

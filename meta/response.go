@@ -1,7 +1,6 @@
 package meta
 
 import (
-	"fmt"
 	"github.com/foreversmart/notion_blog/log"
 	"github.com/foreversmart/notion_blog/utils"
 	"time"
@@ -62,7 +61,6 @@ func (r *PageChunkResponse) FetchBlockMeta(block *PageChunkBlock) (meta *PageMet
 
 	// add find current block comments and parse it to tag and meta
 	for _, disId := range block.Value.Discussions {
-		fmt.Println("dis", disId)
 		dis, ok := r.RecordMap.Discussion[disId]
 		if !ok {
 			continue
@@ -80,7 +78,7 @@ func (r *PageChunkResponse) FetchBlockMeta(block *PageChunkBlock) (meta *PageMet
 
 	meta.Meta, meta.Tags = CommentMetaAndTags(meta.Comment)
 	meta.SubTitle = meta.Meta["sub_title"]
-	meta.PagePath = utils.PathPath(meta.SubTitle)
+	meta.PageName = utils.PathPath(meta.SubTitle)
 	return
 }
 

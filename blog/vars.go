@@ -7,7 +7,7 @@ showonlyimage: true
 title:      "{{.Title}}"
 subtitle:   "{{.SubTitle}}"
 excerpt: "{{.Excerpt}}"
-description: "{{.Description}}"
+description: {{.Description}}
 date:       "{{.Date}}"
 author: "foreversmart"
 image: "{{.Image}}"
