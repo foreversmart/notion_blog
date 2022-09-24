@@ -139,7 +139,16 @@ pre[class*="language-"] {
 .token.entity {
 	cursor: help;
 }
-
+.pseudoBefore:before {
+	color: var(--pseudoBefore--color);
+	content: var(--pseudoBefore--content);
+	border: var(--pseudoBefore--border);
+	width: var(--pseudoBefore--width);
+	height: var(--pseudoBefore--height);
+	display: var(--pseudoBefore--display) !important;
+	background: var(--pseudoBefore--background);
+	font-family: var(--pseudoBefore--fontFamily);
+}
 /**
  * prism.js Dark theme for JavaScript, CSS and HTML
  * Based on the slides of the talk “/Reg(exp){2}lained/”
